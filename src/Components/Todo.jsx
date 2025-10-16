@@ -5,22 +5,43 @@ import { IoMdDoneAll } from "react-icons/io";
 import { MdDelete } from "react-icons/md";
 import { CiEdit } from "react-icons/ci";
 
+
 function Todo() {
   const [todo, setTodo] = useState("");
   const [todos, setTodos] = useState([]);
-  const [editTodo, setEditTodos] = useState('') 
+  const [editTodo, setEditTodo] = useState(null) 
+  const [msg,setMsg] = useState("")
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
   };
   const addTodo = () => {
-    setTodos([...todos, {list:todo, id:Date.now(), status:false}]);
+    let trimTodo = todo.trim()
+    
+    let regex = /^[a-zA-Z0-9.,:;_%+-]+$/;
+    if(!regex.test(trimTodo)){
+    setMsg("please enter valid inputs...")
+    return
+    }
+
+    let isDuplicate = todos.some(
+      (t)=>t.list.toLowerCase() === todo.toLowerCase()
+    )
+    if(isDuplicate){
+      setMsg("This TODO is already exists...")
+      return
+    }
+
+    setTodos([...todos, {list:todo.trim(), id:Date.now(), status:false}]);
     // console.log(todos);
     setTodo("");
+    setMsg("")
   };
 
   const onDelete = (id) =>{
     setTodos(todos.filter((y)=>y.id !== id ))
+    alert("Are you sure you want to delete this todo?")
   }
   const onComplete = (id) =>{
     let complete = todos.map((a)=>{
@@ -33,30 +54,50 @@ function Todo() {
     setTodos(complete)
   }
   const onEdit = (x)=>{
-    setEditTodos(x)
+    setEditTodo(x)
     setTodo(x.list)
     console.log(x.list)
   }
   const handledEdit = ()=>{
-    const newData = todos.map((t)=>{
-      if(t.id == editTodo.id){
-        return {...t, list:todo}
-      }
-      return t
-    })
+    if(todo.trim()===""){
+      setMsg("TODO Cannot be null value ")
+      return  
+    }
+    const newData = todos.map((t)=>t.id == editTodo.id ? {...t,list:todo.trim()}:t)
     setTodos(newData)
+
+    setTodo("")
+    setMsg("")
+    setEditTodo(null)
   }
-  const inputRef = useRef("null");
+
+  const inputRef = useRef(null);
   useEffect(() => {
     inputRef.current.focus();
     console.log(inputRef.current);
   }); //dependancy ella
 
+  useEffect(() => {
+  const storedTodos = localStorage.getItem("todos");
+  if (storedTodos) {
+    try {
+      setTodos(JSON.parse(storedTodos));
+    } catch (e) {
+      console.error("Failed to parse todos from localStorage", e);
+      setTodos([]);
+    }
+  }
+}, []);
+  useEffect(()=>{
+    localStorage.setItem("todos",JSON.stringify(todos))
+  },[todos])
+
   return (
     <div className="container">
       <h2>TODO APP</h2>
       <form className="form-group" onSubmit={handleSubmit}>
-        <input
+        <div style={{"flexGrow": 1}}>
+          <input
           type="text"
           value={todo}
           ref={inputRef}
@@ -64,6 +105,8 @@ function Todo() {
           className="form-control"
           onChange={(event) => setTodo(event.target.value)}
         ></input>
+        {msg && <p style={{color:"red",marginTop:"5px",fontSize:"14px"}}>{msg}</p>}
+        </div>
         <button onClick={editTodo ? handledEdit : addTodo}>{editTodo ? "EDIT" : "ADD"}</button>
       </form>
       <div className="list">

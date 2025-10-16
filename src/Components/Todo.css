@@ -12,9 +12,11 @@ h2{
 }
 .form-group{
     display: flex;
-    flex-direction: row;
     margin:20px;
-    width:auto
+    width:auto;
+    flex-direction: row;
+    align-items: start;
+    justify-content: space-between;
 }
 button{
     margin-left: 10px;
